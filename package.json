@@ -1,6 +1,5 @@
 {
   "name": "gatsby-source-tilda",
-  "private": true,
   "version": "1.0.0",
   "description": "Gatsby source plugin for building websites using the tilda.cc CMS as a data source",
   "main": "index.js",
@@ -35,5 +34,12 @@
   },
   "peerDependencies": {
     "gatsby": "^2.12.1"
+  },
+  "bugs": {
+    "url": "https://github.com/dmalexeev/gatsby-source-tilda/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dmalexeev/gatsby-source-tilda.git"
   }
 }
