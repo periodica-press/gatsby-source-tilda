@@ -15,7 +15,8 @@
   "license": "MIT",
   "keywords": [
     "gatsby",
-    "gatsby-source",
+    "gatsby-plugin",
+    "gatsby-source-tilda",
     "tilda"
   ],
   "dependencies": {
