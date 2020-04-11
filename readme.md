@@ -1,6 +1,6 @@
 # gatsby-source-tilda
 
-Source plugin for pulling pages and and assets into Gatsby from tilda.cc project ([API](http://help.tilda.ws/api) available for [Bussiness Plan](https://tilda.cc/pricing/) only). 
+Source plugin for pulling pages and and assets into Gatsby from [tilda.cc](https://tilda.cc/) project ([API](http://help.tilda.ws/api) available for [Bussiness Plan](https://tilda.cc/pricing/) only). 
 
 ## Install
 `npm install --save gatsby-source-tilda`
