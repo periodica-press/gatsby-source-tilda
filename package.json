@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-tilda",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Gatsby source plugin for building websites using the tilda.cc CMS as a data source",
   "main": "index.js",
   "scripts": {
