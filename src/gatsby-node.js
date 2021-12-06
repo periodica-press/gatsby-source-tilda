@@ -40,11 +40,10 @@ export const createSchemaCustomization = ({ actions }) => {
 
 export const sourceNodes = async (
   {
-    actions: { createNode, touchNode, deleteNode },
+    actions: { createNode, touchNode, deleteNode, getNode },
     createNodeId,
     createContentDigest,
     getNodes,
-    getNode,
     store,
     cache,
     reporter,

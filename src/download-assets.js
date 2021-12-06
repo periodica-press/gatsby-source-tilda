@@ -14,12 +14,11 @@ let totalJobs = 0;
 
 export const downloadAssets = async (gatsbyFunctions) => {
   const {
-    actions: { createNode, touchNode },
+    actions: { createNode, touchNode, getNode },
     createNodeId,
     store,
     cache,
     getNodes,
-    getNode,
     reporter,
   } = gatsbyFunctions;
 
