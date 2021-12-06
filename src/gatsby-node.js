@@ -44,6 +44,7 @@ export const sourceNodes = async (
     createNodeId,
     createContentDigest,
     getNodes,
+    getNode,
     store,
     cache,
     reporter,
@@ -57,7 +58,7 @@ export const sourceNodes = async (
   if (!online && process.env.NODE_ENV !== "production") {
     getNodes()
       .filter((n) => n.internal.owner === OWNER)
-      .forEach((n) => touchNode({ nodeId: n.id }));
+      .forEach((n) => touchNode(n));
 
     console.log("Using Offline cache ⚠️");
     console.log(
@@ -99,8 +100,8 @@ export const sourceNodes = async (
 
   // process deleted tilda pages and assets
   const deleteTildaNode = (node) => {
-    touchNode({ nodeId: node.id });
-    deleteNode({ node });
+    touchNode(node);
+    deleteNode(node);
   };
   deletedPageNodes.forEach(deleteTildaNode);
   deletedAssets.forEach(deleteTildaNode);
@@ -124,7 +125,8 @@ export const sourceNodes = async (
   // touch unmodified pages to keep from garbage collection
   notModifiedPages.forEach((p) => {
     const nodeId = createPageNodeId(createNodeId, p.id);
-    touchNode({ nodeId });
+    const node = getNode(nodeId);
+    touchNode(node);
   });
 
   // create all tilda pages and assets to gatsby nodes
@@ -139,7 +141,7 @@ export const sourceNodes = async (
   );
 
   const existingNodes = getNodes().filter((n) => n.internal.owner === OWNER);
-  existingNodes.forEach((n) => touchNode({ nodeId: n.id }));
+  existingNodes.forEach((n) => touchNode(n));
 
   // download locally all tilda assets from imported pages
   await downloadAssets({

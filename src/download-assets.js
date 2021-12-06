@@ -19,6 +19,7 @@ export const downloadAssets = async (gatsbyFunctions) => {
     store,
     cache,
     getNodes,
+    getNode,
     reporter,
   } = gatsbyFunctions;
 
@@ -39,7 +40,8 @@ export const downloadAssets = async (gatsbyFunctions) => {
       // to compare a modified asset to a cached version?
       if (cacheRemoteData) {
         fileNodeID = cacheRemoteData.fileNodeID; // eslint-disable-line prefer-destructuring
-        touchNode({ nodeId: cacheRemoteData.fileNodeID });
+        const node = getNode(fileNodeID);
+        touchNode(node);
       }
 
       // If we don't have cached data, download the file
