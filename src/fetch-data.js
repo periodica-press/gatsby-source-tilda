@@ -1,19 +1,20 @@
-const getTildaPages = async (pluginConfig) => {
-  console.time("Fetch Tilda Pages data");
-  console.log("Starting to fetch data from Tilda");
-
-  const projectId = pluginConfig.get("projectId");
-  const { api } = pluginConfig;
-  const pages = await api.fetchProjectPages(projectId);
-  return pages;
-};
-
-export const fetchPages = async (pluginConfig, reporter) => {
+export const fetchPages = async ({ pluginConfig, reporter }) => {
   try {
-    const pages = await getTildaPages(pluginConfig);
+    const projectId = pluginConfig.get(`projectId`);
+    const pages = await pluginConfig.api.fetchProjectPages(projectId);
     return pages;
   } catch (e) {
-    reporter.panicOnBuild(`Fetch Tilda Pages failed: ${e}`);
+    reporter.panicOnBuild(`Fetch Tilda Pages failed`, e);
     return [];
+  }
+};
+
+export const fetchPageInfo = async ({ pageId, pluginConfig, reporter }) => {
+  try {
+    const pageInfo = await pluginConfig.api.fetchPage(pageId);
+    return pageInfo;
+  } catch (e) {
+    reporter.panicOnBuild(`Couldn't get Tilda Page (id: ${pageId}) Info`, e);
+    throw e;
   }
 };

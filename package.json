@@ -1,6 +1,6 @@
 {
   "name": "gatsby-source-tilda",
-  "version": "1.0.5",
+  "version": "2.0.0",
   "description": "Gatsby source plugin for building websites using the tilda.cc CMS as a data source",
   "main": "index.js",
   "scripts": {
@@ -20,21 +20,20 @@
     "tilda"
   ],
   "dependencies": {
-    "@babel/runtime": "^7.8.7",
-    "axios": "^0.19.2",
-    "gatsby-source-filesystem": "^2.1.48",
-    "is-online": "^8.2.1",
-    "progress": "^2.0.3",
-    "query-string": "^6.11.0"
+    "@babel/runtime": "^7.16.7",
+    "axios": "^0.24.0",
+    "gatsby-source-filesystem": "^4.5.1",
+    "is-online": "^9.0.1",
+    "progress": "^2.0.3"
   },
   "devDependencies": {
-    "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.8.7",
-    "babel-preset-gatsby-package": "^0.3.1",
-    "cross-env": "^5.2.1"
+    "@babel/cli": "^7.16.8",
+    "@babel/core": "^7.16.7",
+    "babel-preset-gatsby-package": "^2.5.0",
+    "cross-env": "^7.0.3"
   },
   "peerDependencies": {
-    "gatsby": "^2.12.1"
+    "gatsby": "^4.0.0"
   },
   "bugs": {
     "url": "https://github.com/dmalexeev/gatsby-source-tilda/issues"

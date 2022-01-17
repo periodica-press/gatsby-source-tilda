@@ -1,44 +1,46 @@
-import axios from 'axios';
-import query from 'query-string';
+import axios from "axios";
 
-const API = 'http://api.tildacdn.info/v1';
+const API = "http://api.tildacdn.info/v1/";
 
 class TildaApi {
   constructor(publicKey, secret) {
     this.publicKey = publicKey;
     this.secret = secret;
-  }
-
-  apiUrl(method, params = {}) {
-    const queryString = query.stringify(params);
-    return `${API}/${method}?publickey=${this.publicKey}&secretkey=${this.secret}&${queryString}`;
+    this.instance = axios.create({
+      baseURL: API,
+      params: {
+        publickey: this.publicKey,
+        secretkey: this.secret,
+      },
+    });
   }
 
   fetchProjects() {
-    return axios.get(this.apiUrl('getprojectslist'))
-      .then((response) => {
-        if (response && response.data && response.data.status === 'FOUND') {
-          return response.data.result || [];
-        }
-        throw new Error(response);
-      });
+    return this.instance.get("/getprojectslist").then((response) => {
+      if (response && response.data && response.data.status === "FOUND") {
+        return response.data.result || [];
+      }
+      throw new Error(response);
+    });
   }
 
   fetchProjectPages(projectId) {
-    return axios.get(this.apiUrl('getpageslist', { projectid: projectId }))
+    return this.instance
+      .get("/getpageslist", { params: { projectid: projectId } })
       .then((response) => {
-        if (response && response.data && response.data.status === 'FOUND') {
+        if (response && response.data && response.data.status === "FOUND") {
           return response.data.result || [];
         }
         throw new Error(response);
       })
-      .then((items) => items.filter((page) => page.published !== ''));
+      .then((items) => items.filter((page) => page.published !== ""));
   }
 
   fetchPage(pageId) {
-    return axios.get(this.apiUrl('getpageexport', { pageid: pageId }))
+    return this.instance
+      .get("/getpageexport", { params: { pageid: pageId } })
       .then((response) => {
-        if (response && response.data && response.data.status === 'FOUND') {
+        if (response && response.data && response.data.status === "FOUND") {
           return response.data.result;
         }
         throw new Error(response);

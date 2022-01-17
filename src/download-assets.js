@@ -1,37 +1,31 @@
-import ProgressBar from 'progress';
-import { createRemoteFileNode } from 'gatsby-source-filesystem';
-import { OWNER, PAGE_ASSET_TYPE } from './consts';
+import ProgressBar from "progress";
+import { createRemoteFileNode } from "gatsby-source-filesystem";
 
-const bar = new ProgressBar(
-  'Downloading Tilda Assets [:bar] :current/:total :elapsed secs :percent',
-  {
-    total: 0,
-    width: 30,
-  },
-);
-
-let totalJobs = 0;
-
-export const downloadAssets = async (gatsbyFunctions) => {
+export const downloadTildaAssets = async (gatsbyFunctions) => {
   const {
-    actions: { createNode, touchNode },
+    actions: { createNode, touchNode, createNodeField },
     createNodeId,
     store,
     cache,
     getNodes,
+    getNode,
     reporter,
+    assetNodes,
   } = gatsbyFunctions;
 
-  const assetNodes = getNodes().filter(
-    (n) => n.internal.owner === OWNER && n.internal.type === PAGE_ASSET_TYPE,
+  const bar = new ProgressBar(
+    "Downloading Tilda Assets [:bar] :current/:total :elapsed secs :percent",
+    {
+      total: assetNodes.length,
+      width: 30,
+    }
   );
 
   await Promise.all(
     assetNodes.map(async (node) => {
-      totalJobs += 1;
-      bar.total = totalJobs;
       let fileNodeID;
       const { from: url, id } = node;
+
       const remoteDataCacheKey = `tilda-asset-${id}-${url}`;
       const cacheRemoteData = await cache.get(remoteDataCacheKey);
       // Avoid downloading the asset again if it's been cached
@@ -39,37 +33,32 @@ export const downloadAssets = async (gatsbyFunctions) => {
       // to compare a modified asset to a cached version?
       if (cacheRemoteData) {
         fileNodeID = cacheRemoteData.fileNodeID; // eslint-disable-line prefer-destructuring
-        touchNode({ nodeId: cacheRemoteData.fileNodeID });
+        touchNode(getNode(cacheRemoteData.fileNodeID));
       }
 
       // If we don't have cached data, download the file
       if (!fileNodeID) {
-        try {
-          const fileNode = await createRemoteFileNode({
-            url,
-            store,
-            cache,
-            createNode,
-            createNodeId,
-            reporter,
-          });
+        const fileNode = await createRemoteFileNode({
+          url,
+          store,
+          cache,
+          createNode,
+          createNodeId,
+          reporter,
+        });
 
-          if (fileNode) {
-            fileNodeID = fileNode.id;
-            await cache.set(remoteDataCacheKey, { fileNodeID });
-          }
-        } catch (err) {
-          // Ignore
+        if (fileNode) {
+          bar.tick();
+          fileNodeID = fileNode.id;
+          await cache.set(remoteDataCacheKey, { fileNodeID: fileNode.id });
         }
       }
 
       if (fileNodeID) {
-        bar.tick();
-        // eslint-disable-next-line no-param-reassign
-        node.localFile___NODE = fileNodeID;
+        createNodeField({ node, name: "localFile", value: fileNodeID });
       }
 
       return node;
-    }),
+    })
   );
 };
