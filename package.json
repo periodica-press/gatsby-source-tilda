@@ -9,7 +9,7 @@
     "watch": "babel -w src --out-dir . --ignore **/__tests__"
   },
   "engines": {
-    "node": ">=10.13.0"
+    "node": ">=14"
   },
   "author": "dmalexeev",
   "license": "MIT",
