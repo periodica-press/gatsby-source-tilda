@@ -1,7 +1,6 @@
 node_modules
 /__tests__
+/dist
 /yarn.lock
-/*.js
-!index.js
 /api
 .idea
