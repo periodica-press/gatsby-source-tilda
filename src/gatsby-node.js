@@ -19,6 +19,7 @@ export const createSchemaCustomization = ({ actions }) => {
       featureimg: String!,
       descr: String!,
       date: Date,
+      export_imgpath: String,
       projectid: String,
       published: String,
       title: String,

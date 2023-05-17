@@ -17,6 +17,7 @@ module.exports = {
          publicKey: process.env.TILDA_PUBLIC_KEY,       # tilda API public key
          secret: process.env.TILDA_SECRET_KEY,          # tilda API secret key
          projectId: process.env.TILDA_PROJECT_ID,       # tilda project Id to sync
+         skip: true / false,                            # skip tilda sync
          exclude: [],                                   # pages to exclude e.g. ['faq', 'folder/subfolder/blog-post-url']
        },
     },
