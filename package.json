@@ -2,11 +2,11 @@
   "name": "gatsby-source-tilda",
   "version": "2.0.0",
   "description": "Gatsby source plugin for building websites using the tilda.cc CMS as a data source",
-  "main": "index.js",
+  "main": "gatsby-node.js",
   "scripts": {
-    "build": "babel src --out-dir . --ignore **/__tests__",
+    "build": "babel src --out-dir ./dist --ignore **/__tests__",
     "prepare": "cross-env NODE_ENV=production npm run build",
-    "watch": "babel -w src --out-dir . --ignore **/__tests__"
+    "watch": "babel -w src --out-dir ./dist --ignore **/__tests__"
   },
   "engines": {
     "node": ">=14"
@@ -36,10 +36,10 @@
     "gatsby": "^4.0.0"
   },
   "bugs": {
-    "url": "https://github.com/dmalexeev/gatsby-source-tilda/issues"
+    "url": "https://github.com/periodica-press/gatsby-source-tilda/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/dmalexeev/gatsby-source-tilda.git"
+    "url": "https://github.com/periodica-press/gatsby-source-tilda.git"
   }
 }
