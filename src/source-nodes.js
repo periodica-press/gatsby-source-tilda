@@ -36,6 +36,14 @@ export const sourceNodes = async (
   }
   const config = createPluginConfig(configOptions);
 
+  if (config.get('skip')) {
+    reporter.info(
+      `Skip tilda sync...`
+    );
+
+    return;
+  }
+
   // fetch tilda data
   reporter.info(
     `Fetch Tilda Pages for projectId: ${config.get(`projectId`)}...`
