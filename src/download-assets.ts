@@ -40,15 +40,15 @@ export const downloadTildaAssets = async (gatsbyFunctions) => {
       if (!fileNodeID) {
         const fileNode = await createRemoteFileNode({
           url,
-          store,
+          // store,
           cache,
           createNode,
           createNodeId,
-          reporter,
+          // reporter,
         });
 
         if (fileNode) {
-          bar.tick();
+          bar.tick(0, 0);
           fileNodeID = fileNode.id;
           await cache.set(remoteDataCacheKey, { fileNodeID: fileNode.id });
         }
