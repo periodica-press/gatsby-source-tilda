@@ -124,7 +124,7 @@ export const sourceNodes = async (
   });
 
   // create nodes for all tilda pages
-  const tildaPagesNodes = [];
+  const tildaPagesNodes : any = [];
   tildaPagesNodes.push(
     ...(await Promise.all(
       createTildaPages(
@@ -140,7 +140,7 @@ export const sourceNodes = async (
   );
 
   // create nodes for all tilda assets
-  let tildaAssets = [];
+  let tildaAssets : any= [];
   pagesInfo.forEach((pageInfo) => {
     tildaAssets = tildaAssets.concat(
       [...pageInfo.css, ...pageInfo.js, ...pageInfo.images].map((item) => ({
@@ -150,7 +150,7 @@ export const sourceNodes = async (
     );
   });
 
-  const tildaAssetNodes = [];
+  const tildaAssetNodes : any= [];
   tildaAssetNodes.push(
     ...(await Promise.all(
       createTildaPageAssets(

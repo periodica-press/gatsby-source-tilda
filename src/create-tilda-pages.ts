@@ -68,11 +68,11 @@ export const createTildaPages = (gatsbyFunctions, pluginConfig, pages) => {
       width: 30,
     }
   );
-  const createNodePromises = [];
+  const createNodePromises : any = [];
   pages.forEach((page) => {
     const node = createTildaPage(gatsbyFunctions, page);
     createNodePromises.push(node);
-    progressBar.tick();
+    progressBar.tick(0, 0);
   });
 
   return createNodePromises;
@@ -86,11 +86,11 @@ export const createTildaPageAssets = (gatsbyFunctions, assets) => {
       width: 30,
     }
   );
-  const createNodePromises = [];
+  const createNodePromises: any = [];
   assets.forEach((asset) => {
     const node = createTildaPageAsset(gatsbyFunctions, asset);
     createNodePromises.push(node);
-    progressBar.tick();
+    progressBar.tick(0, 0);
   });
 
   return createNodePromises;

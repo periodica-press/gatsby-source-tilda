@@ -1,9 +1,61 @@
-import axios from "axios";
+import axios, { AxiosInstance } from "axios";
 
 const API = "http://api.tildacdn.info/v1/";
 
+export interface ProjectsListRes {
+    "status": string;
+    "result": 
+      {
+        "id": string,
+        "title": string,
+        "descr": string
+      }[]
+}
+export interface PagesExportsRes {
+    "status": string;
+    "result": {
+      "id": string,
+      "projectid": string,
+      "title": string,
+      "descr": string,
+      "img": string,
+      "featureimg": string,
+      "alias": string,
+      "date": string,
+      "sort": string,
+      "published": string,
+      "images": 
+        {
+          "from": string,
+          "to": string
+        }[],
+      "html": string,
+      "filename": string
+    }  
+}
+export interface PagesListRes {
+  "status": string,
+  "result": 
+    {
+      "id": string,
+      "projectid": string,
+      "title": string,
+      "descr": string,
+      "img": string,
+      "featureimg": string,
+      "alias": string,
+      "date": string,
+      "sort": string,
+      "published": string,
+      "filename": string
+    }[],
+}
+
 class TildaApi {
-  constructor(publicKey, secret) {
+  publicKey: any;
+  secret: any;
+  instance: AxiosInstance;
+  constructor(publicKey: any, secret: any) {
     this.publicKey = publicKey;
     this.secret = secret;
     this.instance = axios.create({
@@ -15,35 +67,35 @@ class TildaApi {
     });
   }
 
-  fetchProjects() {
-    return this.instance.get("/getprojectslist").then((response) => {
+  fetchProjects() : any {
+    return this.instance.get<ProjectsListRes>("/getprojectslist").then((response) => {
       if (response && response.data && response.data.status === "FOUND") {
         return response.data.result || [];
       }
-      throw new Error(response);
+      throw new Error(JSON.stringify(response));
     });
   }
 
-  fetchProjectPages(projectId) {
+  fetchProjectPages(projectId: any) {
     return this.instance
-      .get("/getpageslist", { params: { projectid: projectId } })
+      .get<PagesListRes>("/getpageslist", { params: { projectid: projectId } })
       .then((response) => {
         if (response && response.data && response.data.status === "FOUND") {
           return response.data.result || [];
         }
-        throw new Error(response);
+        throw new Error(JSON.stringify(response));
       })
-      .then((items) => items.filter((page) => page.published !== ""));
+      .then((items: any[]) => items.filter((page: { published: string; }) => page.published !== ""));
   }
 
-  fetchPage(pageId) {
+  fetchPage(pageId: any) {
     return this.instance
-      .get("/getpageexport", { params: { pageid: pageId } })
+      .get<PagesExportsRes>("/getpageexport", { params: { pageid: pageId } })
       .then((response) => {
         if (response && response.data && response.data.status === "FOUND") {
           return response.data.result;
         }
-        throw new Error(response);
+        throw new Error(JSON.stringify(response));
       });
   }
 }
