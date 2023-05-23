@@ -2,18 +2,24 @@ import axios, { AxiosInstance } from "axios";
 
 const API = "http://api.tildacdn.info/v1/";
 
+//List
+export type ProjectsListResultRes = {
+  "id": string,
+  "title": string,
+  "descr": string
+}
 export interface ProjectsListRes {
     "status": string;
-    "result": 
-      {
-        "id": string,
-        "title": string,
-        "descr": string
-      }[]
+    "result": ProjectsListResultRes[]
 }
+//List
+
+//Exports
 export interface PagesExportsRes {
     "status": string;
     "result": {
+      css: any;
+      js: any;
       "id": string,
       "projectid": string,
       "title": string,
@@ -33,24 +39,27 @@ export interface PagesExportsRes {
       "filename": string
     }  
 }
+//Exports
+
+//List
+export type PagesListResultRes = {
+  "id": string,
+  "projectid": string,
+  "title": string,
+  "descr": string,
+  "img": string,
+  "featureimg": string,
+  "alias": string,
+  "date": string,
+  "sort": string,
+  "published": string,
+  "filename": string
+}
 export interface PagesListRes {
   "status": string,
-  "result": 
-    {
-      "id": string,
-      "projectid": string,
-      "title": string,
-      "descr": string,
-      "img": string,
-      "featureimg": string,
-      "alias": string,
-      "date": string,
-      "sort": string,
-      "published": string,
-      "filename": string
-    }[],
+  "result": PagesListResultRes[],
 }
-
+//List
 class TildaApi {
   publicKey: any;
   secret: any;
@@ -67,7 +76,7 @@ class TildaApi {
     });
   }
 
-  fetchProjects() : any {
+  fetchProjects() {
     return this.instance.get<ProjectsListRes>("/getprojectslist").then((response) => {
       if (response && response.data && response.data.status === "FOUND") {
         return response.data.result || [];
@@ -76,7 +85,7 @@ class TildaApi {
     });
   }
 
-  fetchProjectPages(projectId: any) {
+  fetchProjectPages(projectId: string) {
     return this.instance
       .get<PagesListRes>("/getpageslist", { params: { projectid: projectId } })
       .then((response) => {
@@ -85,10 +94,10 @@ class TildaApi {
         }
         throw new Error(JSON.stringify(response));
       })
-      .then((items: any[]) => items.filter((page: { published: string; }) => page.published !== ""));
+      .then((items: PagesListResultRes[]) => items.filter((page: { published: string; }) => page.published !== ""));
   }
 
-  fetchPage(pageId: any) {
+  fetchPage(pageId: string) {
     return this.instance
       .get<PagesExportsRes>("/getpageexport", { params: { pageid: pageId } })
       .then((response) => {

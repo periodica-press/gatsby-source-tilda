@@ -1,6 +1,6 @@
 export { sourceNodes } from "./source-nodes";
 
-export const createSchemaCustomization = ({ actions }) => {
+export const createSchemaCustomization = ({ actions }: {actions: any}) => {
   const { createTypes } = actions;
   createTypes(`
     type TildaPageAsset {

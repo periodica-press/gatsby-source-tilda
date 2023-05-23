@@ -1,8 +1,19 @@
 import ProgressBar from "progress";
 import { PAGE_ASSET_TYPE, PAGE_TYPE } from "./consts";
 import { createPageNodeId } from "./utils";
+import TildaApi from "./api/tilda";
+import { PluginConfigProps } from "./fetch-data";
 
-const createTildaPageAsset = async (gatsbyFunctions, asset) => {
+const createTildaPageAsset = async (
+  gatsbyFunctions: { 
+  actions: { createNode: any; }; 
+  createNodeId: any; 
+  createContentDigest: any; 
+}, 
+  asset: { 
+    pageId: any; 
+    from: any; 
+  }) => {
   const {
     actions: { createNode },
     createNodeId,
@@ -27,7 +38,7 @@ const createTildaPageAsset = async (gatsbyFunctions, asset) => {
   // return createNode(nodeData);
 };
 
-const createTildaPage = async (gatsbyFunctions, page) => {
+const createTildaPage = async (gatsbyFunctions: { actions: any; createNodeId: any; createContentDigest: any; }, page: { id?: any; html?: any; }) => {
   const {
     actions: { createNode },
     createNodeId,
@@ -37,7 +48,7 @@ const createTildaPage = async (gatsbyFunctions, page) => {
 
   let { html } = page;
   const initScripts = html.match(/<script[\s\S]*?>[\s\S]*?<\/script>/gi) || [];
-  initScripts.forEach((script) => {
+  initScripts.forEach((script: any) => {
     html = html.replace(script, "");
   });
 
@@ -59,7 +70,14 @@ const createTildaPage = async (gatsbyFunctions, page) => {
   return createNode(nodeData);
 };
 
-export const createTildaPages = (gatsbyFunctions, pluginConfig, pages) => {
+export const createTildaPages = (
+  gatsbyFunctions: { 
+    actions: { createNode: any; }; 
+    createNodeId: any; 
+    createContentDigest: any; 
+  }, 
+  pluginConfig: PluginConfigProps, 
+  pages: any[]) => {
   // create nodes for all tilda pages
   const progressBar = new ProgressBar(
     "Creating TildaPage Nodes [:bar] :current/:total :elapsed secs :percent",
@@ -78,7 +96,7 @@ export const createTildaPages = (gatsbyFunctions, pluginConfig, pages) => {
   return createNodePromises;
 };
 
-export const createTildaPageAssets = (gatsbyFunctions, assets) => {
+export const createTildaPageAssets = (gatsbyFunctions: { actions: { createNode: any; }; createNodeId: any; createContentDigest: any; }, assets: any[]) => {
   const progressBar = new ProgressBar(
     "Creating TildaPageAsset Nodes [:bar] :current/:total :elapsed secs :percent",
     {
@@ -87,7 +105,7 @@ export const createTildaPageAssets = (gatsbyFunctions, assets) => {
     }
   );
   const createNodePromises: any = [];
-  assets.forEach((asset) => {
+  assets.forEach((asset: any) => {
     const node = createTildaPageAsset(gatsbyFunctions, asset);
     createNodePromises.push(node);
     progressBar.tick(0, 0);

@@ -1,7 +1,17 @@
 import ProgressBar from "progress";
 import { createRemoteFileNode } from "gatsby-source-filesystem";
 
-export const downloadTildaAssets = async (gatsbyFunctions) => {
+export const downloadTildaAssets = async (
+    gatsbyFunctions: { 
+      actions: any; 
+      createNodeId: any; 
+      store: any; 
+      cache: any; 
+      getNode: any; 
+      getNodes: any; 
+      reporter: any; 
+      assetNodes: any; 
+  }) => {
   const {
     actions: { createNode, touchNode, createNodeField },
     createNodeId,
@@ -22,7 +32,7 @@ export const downloadTildaAssets = async (gatsbyFunctions) => {
   );
 
   await Promise.all(
-    assetNodes.map(async (node) => {
+    assetNodes.map(async (node: { from: any; id: any; }) => {
       let fileNodeID;
       const { from: url, id } = node;
 
