@@ -1,21 +1,27 @@
+import type { PluginOptions } from 'gatsby';
 import TildaApi from './api/tilda';
-import { PluginConfigProps } from './fetch-data';
 
-export interface PluginOptionsProps {
-  secret: any;
-  publicKey: any;
+export interface PluginSettings {
+  secret: string;
+  publicKey: string;
+  projectId: string;
+  exclude: string[];
+  skip?: boolean;
+  api: TildaApi;
 }
 
-const defaultOptions = { exclude: [] };
+const defaultOptions: Omit<PluginSettings, 'api'> = {
+  secret: '',
+  projectId: '',
+  publicKey: '',
+  exclude: [],
+};
 
-export const createPluginConfig : (arg0: PluginOptionsProps) => PluginConfigProps = (pluginOptions: PluginOptionsProps) => {
+export const createPluginConfig = (pluginOptions: PluginOptions) => {
   const { secret, publicKey } = pluginOptions;
-  const conf = { ...defaultOptions, ...pluginOptions };
-
   return {
-    get: (key: string) => conf[key as keyof typeof conf],
-    api: new TildaApi(publicKey, secret),
-    getOriginalPluginOptions: () => pluginOptions,
-    exclude: conf.exclude,
-  };
+    ...defaultOptions,
+    ...pluginOptions,
+    api: new TildaApi(publicKey as string, secret as string),
+  } as PluginSettings;
 };

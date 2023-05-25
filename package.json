@@ -1,12 +1,12 @@
 {
   "name": "gatsby-source-tilda",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "description": "Gatsby source plugin for building websites using the tilda.cc CMS as a data source",
   "main": "gatsby-node.js",
   "scripts": {
-    "build": "babel src --out-dir ./dist --ignore **/__tests__",
+    "build": "tsc",
     "prepare": "cross-env NODE_ENV=production npm run build",
-    "watch": "babel -w src --out-dir ./dist --ignore **/__tests__"
+    "watch": "tsc --noEmit --watch"
   },
   "engines": {
     "node": ">=14"
@@ -29,6 +29,7 @@
   "devDependencies": {
     "@babel/cli": "^7.16.8",
     "@babel/core": "^7.16.7",
+    "@periodica-press/linters": "^2.0.5",
     "@types/progress": "^2.0.5",
     "babel-preset-gatsby-package": "^2.5.0",
     "cross-env": "^7.0.3",

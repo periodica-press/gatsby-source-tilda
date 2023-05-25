@@ -1,30 +1,40 @@
-import ProgressBar from "progress";
-import { createRemoteFileNode } from "gatsby-source-filesystem";
+import ProgressBar from 'progress';
+import { createRemoteFileNode } from 'gatsby-source-filesystem';
+import type {
+  Actions,
+  Node,
+  // NodeInput,
+  NodePluginArgs,
+  Reporter,
+} from 'gatsby';
 
-export const downloadTildaAssets = async (
-    gatsbyFunctions: { 
-      actions: any; 
-      createNodeId: any; 
-      store: any; 
-      cache: any; 
-      getNode: any; 
-      getNodes: any; 
-      reporter: any; 
-      assetNodes: any; 
-  }) => {
+export const downloadTildaAssets = async (gatsbyFunctions: {
+  actions: {
+    createNode: Actions['createNode'];
+    createNodeField: Actions['createNodeField'];
+    touchNode: Actions['touchNode'];
+  };
+  createNodeId: NodePluginArgs['createNodeId'];
+  store: NodePluginArgs['store'];
+  cache: NodePluginArgs['cache'];
+  getNode: NodePluginArgs['getNode'];
+  getNodes: NodePluginArgs['getNodes'];
+  reporter: Reporter;
+  assetNodes: Node[];
+}) => {
   const {
     actions: { createNode, touchNode, createNodeField },
     createNodeId,
-    store,
+    // store,
     cache,
-    getNodes,
+    // getNodes,
     getNode,
-    reporter,
+    // reporter,
     assetNodes,
   } = gatsbyFunctions;
 
   const bar = new ProgressBar(
-    "Downloading Tilda Assets [:bar] :current/:total :elapsed secs :percent",
+    'Downloading Tilda Assets [:bar] :current/:total :elapsed secs :percent',
     {
       total: assetNodes.length,
       width: 30,
@@ -32,7 +42,7 @@ export const downloadTildaAssets = async (
   );
 
   await Promise.all(
-    assetNodes.map(async (node: { from: any; id: any; }) => {
+    assetNodes.map(async (node) => {
       let fileNodeID;
       const { from: url, id } = node;
 
@@ -43,13 +53,16 @@ export const downloadTildaAssets = async (
       // to compare a modified asset to a cached version?
       if (cacheRemoteData) {
         fileNodeID = cacheRemoteData.fileNodeID; // eslint-disable-line prefer-destructuring
-        touchNode(getNode(cacheRemoteData.fileNodeID));
+        const cachedNode = getNode(cacheRemoteData.fileNodeID);
+        if (cachedNode) {
+          touchNode(cachedNode);
+        }
       }
 
       // If we don't have cached data, download the file
       if (!fileNodeID) {
         const fileNode = await createRemoteFileNode({
-          url,
+          url: url as string,
           // store,
           cache,
           createNode,
@@ -65,7 +78,7 @@ export const downloadTildaAssets = async (
       }
 
       if (fileNodeID) {
-        createNodeField({ node, name: "localFile", value: fileNodeID });
+        createNodeField({ node, name: 'localFile', value: fileNodeID });
       }
 
       return node;
