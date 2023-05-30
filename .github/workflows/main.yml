@@ -10,8 +10,6 @@ jobs:
     strategy:
       matrix:
         node-version: [18.x]
-    env:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - uses: actions/checkout@v2
       - name: Staring Node.js ${{ matrix.node-version }}
@@ -19,11 +17,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Bootstraping packages
+        env:
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm install
       - name: Build package
         run: npm run prepare
       - name: Publish package
         if: always()
         env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
