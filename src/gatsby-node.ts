@@ -1,8 +1,11 @@
-export { sourceNodes } from "./source-nodes";
+import type { GatsbyNode } from 'gatsby';
 
-export const createSchemaCustomization = ({ actions }) => {
-  const { createTypes } = actions;
-  createTypes(`
+export { sourceNodes } from './source-nodes';
+
+export const createSchemaCustomization: GatsbyNode['createSchemaCustomization'] =
+  ({ actions }) => {
+    const { createTypes } = actions;
+    createTypes(`
     type TildaPageAsset {
       from: String,
       to: String
@@ -31,4 +34,4 @@ export const createSchemaCustomization = ({ actions }) => {
       css: [TildaPageAsset],
       images: [TildaPageAsset]
     }`);
-};
+  };

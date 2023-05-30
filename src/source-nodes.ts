@@ -1,11 +1,13 @@
-import isOnline from "is-online";
-import { createPluginConfig } from "./plugin-options";
-import { downloadTildaAssets } from "./download-assets";
-import { createTildaPageAssets, createTildaPages } from "./create-tilda-pages";
-import { fetchPages, fetchPageInfo } from "./fetch-data";
-import { OWNER, PAGE_ASSET_TYPE, PAGE_TYPE } from "./consts";
+import isOnline from 'is-online';
+import type { GatsbyNode, NodeInput } from 'gatsby';
+import { createPluginConfig } from './plugin-options';
+import { downloadTildaAssets } from './download-assets';
+import { createTildaPageAssets, createTildaPages } from './create-tilda-pages';
+import { fetchPages, fetchPageInfo } from './fetch-data';
+import { OWNER, PAGE_ASSET_TYPE, PAGE_TYPE } from './consts';
+import type { TildaAsset } from './types';
 
-export const sourceNodes = async (
+export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   {
     actions: { createNode, createNodeField, touchNode, deleteNode },
     createNodeId,
@@ -22,34 +24,32 @@ export const sourceNodes = async (
 
   // If the user knows they are offline, serve them cached result
   // For prod builds though always fail if we can't get the latest data
-  if (!online && process.env.NODE_ENV !== "production") {
+  if (!online && process.env.NODE_ENV !== 'production') {
     getNodes()
       .filter((n) => n.internal.owner === OWNER)
-      .forEach((n) => touchNode({ nodeId: n.id }));
+      .forEach((n) => touchNode(n));
 
-    console.log("Using Offline cache ⚠️");
-    console.log(
-      "Cache may be invalidated if you edit package.json, gatsby-node.js or gatsby-config.js files"
+    reporter.info('Using Offline cache ⚠️');
+    reporter.info(
+      'Cache may be invalidated if you edit package.json, gatsby-node.js or gatsby-config.js files'
     );
 
     return;
   }
   const config = createPluginConfig(configOptions);
 
-  if (config.get('skip')) {
-    reporter.info(
-      `Skip tilda sync...`
-    );
+  if (config.skip) {
+    reporter.info(`Skip tilda sync...`);
 
     return;
   }
 
   // fetch tilda data
-  reporter.info(
-    `Fetch Tilda Pages for projectId: ${config.get(`projectId`)}...`
-  );
+  reporter.info(`Fetch Tilda Pages for projectId: ${config.projectId}...`);
   let pages = await fetchPages({ pluginConfig: config, reporter });
-  pages = pages.filter((p) => !config.exclude.find((item) => item === p.alias));
+  pages = pages.filter(
+    (p) => !config.exclude.find((item: any) => item === p.alias)
+  );
 
   reporter.info(`Fetch Tilda Pages info...`);
   const pagesInfo = await Promise.all(
@@ -65,11 +65,13 @@ export const sourceNodes = async (
 
   // get new, updated and deleted pages
   const tildaPageNodes = getNodes().filter(
-    (n) => n.internal.owner === OWNER && n.internal.type === PAGE_TYPE
+    (n: { internal: { owner: string; type: string } }) =>
+      n.internal.owner === OWNER && n.internal.type === PAGE_TYPE
   );
 
   const tildaAssetsNodes = getNodes().filter(
-    (n) => n.internal.owner === OWNER && n.internal.type === PAGE_ASSET_TYPE
+    (n: { internal: { owner: string; type: string } }) =>
+      n.internal.owner === OWNER && n.internal.type === PAGE_ASSET_TYPE
   );
 
   const deletedPageNodes = tildaPageNodes.filter(
@@ -84,18 +86,19 @@ export const sourceNodes = async (
   const updatedPages = pages.filter((p) =>
     tildaPageNodes.find((n) => p.id === n.pageId && n.published !== p.published)
   );
-  const notModifiedPages = pages.filter((p) =>
-    tildaPageNodes.find((n) => p.id === n.pageId && n.published === p.published)
-  );
+
+  // const notModifiedPages = pages.filter((p) =>
+  //   tildaPageNodes.find((n) => p.id === n.pageId && n.published === p.published)
+  // );
 
   const notModifiedPgs = tildaPageNodes.filter((n) =>
     pages.find((p) => p.id === n.pageId && n.published === p.published)
   );
 
   // process deleted tilda pages and assets
-  const deleteTildaNode = (node) => {
+  const deleteTildaNode = (node: NodeInput) => {
     touchNode(node);
-    deleteNode({ node });
+    deleteNode(node);
   };
   deletedPageNodes.forEach(deleteTildaNode);
   deletedAssets.forEach(deleteTildaNode);
@@ -119,28 +122,25 @@ export const sourceNodes = async (
   reporter.info(`Deleted assets: ${deletedAssets.length}`);
 
   // touch unmodified pages to keep from garbage collection
-  notModifiedPgs.forEach((pageNode) => {
+  notModifiedPgs.forEach((pageNode: any) => {
     touchNode(pageNode);
   });
 
   // create nodes for all tilda pages
-  const tildaPagesNodes = [];
-  tildaPagesNodes.push(
-    ...(await Promise.all(
-      createTildaPages(
-        {
-          actions: { createNode },
-          createNodeId,
-          createContentDigest,
-        },
-        config,
-        pagesInfo
-      )
-    ))
+  await Promise.all(
+    createTildaPages(
+      {
+        actions: { createNode },
+        createNodeId,
+        createContentDigest,
+      },
+      config,
+      pagesInfo
+    )
   );
 
   // create nodes for all tilda assets
-  let tildaAssets = [];
+  let tildaAssets: TildaAsset[] = [];
   pagesInfo.forEach((pageInfo) => {
     tildaAssets = tildaAssets.concat(
       [...pageInfo.css, ...pageInfo.js, ...pageInfo.images].map((item) => ({
@@ -150,18 +150,20 @@ export const sourceNodes = async (
     );
   });
 
-  const tildaAssetNodes = [];
-  tildaAssetNodes.push(
-    ...(await Promise.all(
-      createTildaPageAssets(
-        {
-          actions: { createNode },
-          createNodeId,
-          createContentDigest,
-        },
-        tildaAssets
-      )
-    ))
+  await Promise.all(
+    createTildaPageAssets(
+      {
+        actions: { createNode },
+        createNodeId,
+        createContentDigest,
+      },
+      tildaAssets
+    )
+  );
+
+  const tildaAssetNodes = getNodes().filter(
+    (n: { internal: { owner: string; type: string } }) =>
+      n.internal.owner === OWNER && n.internal.type === PAGE_ASSET_TYPE
   );
 
   //   const existingNodes = getNodes().filter((n) => n.internal.owner === OWNER);
