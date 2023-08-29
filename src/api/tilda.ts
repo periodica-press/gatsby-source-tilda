@@ -108,7 +108,7 @@ class TildaApi {
       );
     }
 
-    return response.data.result || [];
+    return response.data.result.filter((page) => page.published !== '') || [];
   }
 
   async fetchPage(pageId: string) {
