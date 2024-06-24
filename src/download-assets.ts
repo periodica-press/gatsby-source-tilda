@@ -22,7 +22,7 @@ export const downloadTildaAssets = async (gatsbyFunctions: {
   assetNodes: Node[];
 }) => {
   const { default: PQueue } = await import('p-queue');
-  const queue = new PQueue({ concurrency: 5 });
+  const queue = new PQueue({ concurrency: 2 });
 
   const {
     actions: { createNode, touchNode, createNodeField },
