@@ -1,5 +1,6 @@
 import ProgressBar from 'progress';
 import { createRemoteFileNode } from 'gatsby-source-filesystem';
+import PQueue from 'p-queue';
 import type {
   Actions,
   Node,
@@ -7,6 +8,8 @@ import type {
   NodePluginArgs,
   Reporter,
 } from 'gatsby';
+
+const queue = new PQueue({ concurrency: 5 });
 
 export const downloadTildaAssets = async (gatsbyFunctions: {
   actions: {
@@ -61,14 +64,16 @@ export const downloadTildaAssets = async (gatsbyFunctions: {
 
       // If we don't have cached data, download the file
       if (!fileNodeID) {
-        const fileNode = await createRemoteFileNode({
-          url: url as string,
-          // store,
-          cache,
-          createNode,
-          createNodeId,
-          // reporter,
-        });
+        const fileNode = await queue.add(() =>
+          createRemoteFileNode({
+            url: url as string,
+            // store,
+            cache,
+            createNode,
+            createNodeId,
+            // reporter,
+          })
+        );
 
         if (fileNode) {
           bar.tick(0, 0);
