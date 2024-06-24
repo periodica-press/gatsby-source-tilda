@@ -3,7 +3,6 @@ import { createRemoteFileNode } from 'gatsby-source-filesystem';
 import type {
   Actions,
   Node,
-  // NodeInput,
   NodePluginArgs,
   Reporter,
 } from 'gatsby';
@@ -22,6 +21,9 @@ export const downloadTildaAssets = async (gatsbyFunctions: {
   reporter: Reporter;
   assetNodes: Node[];
 }) => {
+  const { default: PQueue } = await import('p-queue');
+  const queue = new PQueue({ concurrency: 5 });
+
   const {
     actions: { createNode, touchNode, createNodeField },
     createNodeId,
@@ -61,14 +63,16 @@ export const downloadTildaAssets = async (gatsbyFunctions: {
 
       // If we don't have cached data, download the file
       if (!fileNodeID) {
-        const fileNode = await createRemoteFileNode({
-          url: url as string,
-          // store,
-          cache,
-          createNode,
-          createNodeId,
-          // reporter,
-        });
+        const fileNode = await queue.add(() =>
+          createRemoteFileNode({
+            url: url as string,
+            // store,
+            cache,
+            createNode,
+            createNodeId,
+            // reporter,
+          })
+        );
 
         if (fileNode) {
           bar.tick(0, 0);
