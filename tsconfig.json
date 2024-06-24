@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "lib": ["dom", "es6"],
-    "sourceMap": true,
+    "sourceMap": false,
     "jsx": "react",
     "noUnusedLocals": true,
     "forceConsistentCasingInFileNames": true,
@@ -10,7 +12,6 @@
     "noImplicitAny": true,
     "strictNullChecks": true,
     "declaration": true,
-    "declarationMap": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "typeRoots": ["./node_modules/@types"],
