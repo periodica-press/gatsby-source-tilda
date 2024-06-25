@@ -33,9 +33,8 @@ const createTildaPageAsset = async (
     },
   };
 
-  const node = createNode(nodeData);
-  return node?.then ? node.then(() => nodeData) : nodeData;
-  // return createNode(nodeData);
+  await createNode(nodeData);
+  return nodeData;
 };
 
 const createTildaPage = async (
