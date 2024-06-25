@@ -54,9 +54,9 @@ export const downloadTildaAssets = async (gatsbyFunctions: {
       // Note: Contentful Assets do not provide useful metadata
       // to compare a modified asset to a cached version?
       if (cacheRemoteData) {
-        fileNodeID = cacheRemoteData.fileNodeID; // eslint-disable-line prefer-destructuring
         const cachedNode = getNode(cacheRemoteData.fileNodeID);
         if (cachedNode) {
+          fileNodeID = cachedNode.id;
           touchNode(cachedNode);
         }
       }
