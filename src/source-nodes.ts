@@ -96,10 +96,7 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   );
 
   // process deleted tilda pages and assets
-  const deleteTildaNode = (node: NodeInput) => {
-    touchNode(node);
-    deleteNode(node);
-  };
+  const deleteTildaNode = (node: NodeInput) => deleteNode(node);
   deletedPageNodes.forEach(deleteTildaNode);
   deletedAssets.forEach(deleteTildaNode);
 
@@ -108,18 +105,33 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
     deletedAssets.map(async (asset) => {
       const { id, url } = asset;
       const remoteDataCacheKey = `tilda-asset-${id}-${url}`;
-      await cache.set(remoteDataCacheKey, null);
+      await cache.del(remoteDataCacheKey);
     })
   );
 
+  // create nodes for all tilda assets
+  let tildaAssets: TildaAsset[] = [];
+  pagesInfo.forEach((pageInfo) => {
+    tildaAssets = tildaAssets.concat(
+      [...pageInfo.css, ...pageInfo.js, ...pageInfo.images].map((item) => ({
+        ...item,
+        pageId: pageInfo.id,
+      }))
+    );
+  });
+
+  reporter.info('');
   reporter.info(`Total TildaPages: ${tildaPageNodes.length}`);
   reporter.info(
     `Created/Updated pages: ${[...newPages, ...updatedPages].length}`
   );
-  reporter.info(`UnModified pages: ${notModifiedPgs.length}`);
+  reporter.info(`Unmodified pages: ${notModifiedPgs.length}`);
   reporter.info(`Deleted pages: ${deletedPageNodes.length}`);
-  reporter.info(`Total TildaAssets: ${tildaAssetsNodes.length}`);
+  reporter.info('');
+  reporter.info(`Total TildaAssets: ${tildaAssets.length}`);
+  reporter.info(`Cached TildaAssets: ${tildaAssetsNodes.length}`);
   reporter.info(`Deleted assets: ${deletedAssets.length}`);
+  reporter.info('');
 
   // touch unmodified pages to keep from garbage collection
   notModifiedPgs.forEach((pageNode: any) => {
@@ -138,17 +150,6 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
       pagesInfo
     )
   );
-
-  // create nodes for all tilda assets
-  let tildaAssets: TildaAsset[] = [];
-  pagesInfo.forEach((pageInfo) => {
-    tildaAssets = tildaAssets.concat(
-      [...pageInfo.css, ...pageInfo.js, ...pageInfo.images].map((item) => ({
-        ...item,
-        pageId: pageInfo.id,
-      }))
-    );
-  });
 
   await Promise.all(
     createTildaPageAssets(

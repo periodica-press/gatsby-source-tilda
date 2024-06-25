@@ -22,7 +22,7 @@ export const downloadTildaAssets = async (gatsbyFunctions: {
   assetNodes: Node[];
 }) => {
   const { default: PQueue } = await import('p-queue');
-  const queue = new PQueue({ concurrency: 5 });
+  const queue = new PQueue({ concurrency: 1 });
 
   const {
     actions: { createNode, touchNode, createNodeField },
@@ -54,9 +54,9 @@ export const downloadTildaAssets = async (gatsbyFunctions: {
       // Note: Contentful Assets do not provide useful metadata
       // to compare a modified asset to a cached version?
       if (cacheRemoteData) {
-        fileNodeID = cacheRemoteData.fileNodeID; // eslint-disable-line prefer-destructuring
         const cachedNode = getNode(cacheRemoteData.fileNodeID);
         if (cachedNode) {
+          fileNodeID = cachedNode.id;
           touchNode(cachedNode);
         }
       }
