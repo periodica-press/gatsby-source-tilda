@@ -167,20 +167,17 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
       n.internal.owner === OWNER && n.internal.type === PAGE_ASSET_TYPE
   );
 
-  //   const existingNodes = getNodes().filter((n) => n.internal.owner === OWNER);
-  //   existingNodes.forEach((n) => touchNode(n));
-
-  //   console.log({ tildaAssetNodes });
-
-  //   download locally all tilda assets from imported pages
-  await downloadTildaAssets({
-    actions: { createNode, createNodeField, touchNode },
-    createNodeId,
-    store,
-    cache,
-    getNode,
-    getNodes,
-    reporter,
-    assetNodes: tildaAssetNodes,
-  });
+  if (config.downloadAssets) {
+    //   download locally all tilda assets from imported pages
+    await downloadTildaAssets({
+      actions: { createNode, createNodeField, touchNode },
+      createNodeId,
+      store,
+      cache,
+      getNode,
+      getNodes,
+      reporter,
+      assetNodes: tildaAssetNodes,
+    });
+  }
 };

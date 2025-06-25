@@ -1,8 +1,9 @@
 # gatsby-source-tilda
 
-Source plugin for pulling pages and and assets into Gatsby from [tilda.cc](https://tilda.cc/) project ([API](http://help.tilda.ws/api) available for [Bussiness Plan](https://tilda.cc/pricing/) only). 
+Source plugin for pulling pages and and assets into Gatsby from [tilda.cc](https://tilda.cc/) project ([API](http://help.tilda.ws/api) available for [Bussiness Plan](https://tilda.cc/pricing/) only).
 
 ## Install
+
 `npm install --save gatsby-source-tilda`
 
 ## How to use
@@ -18,6 +19,7 @@ module.exports = {
          secret: process.env.TILDA_SECRET_KEY,          # tilda API secret key
          projectId: process.env.TILDA_PROJECT_ID,       # tilda project Id to sync
          skip: true / false,                            # skip tilda sync
+         downloadAssets: true / false,                  # download all tilda assets (css/js/img) locally
          exclude: [],                                   # pages to exclude e.g. ['faq', 'folder/subfolder/blog-post-url']
        },
     },
@@ -28,6 +30,7 @@ module.exports = {
 ## How to query
 
 ### Query pages
+
 ```
 {
     allTildaPage {
@@ -55,13 +58,14 @@ module.exports = {
           from
           to
         }
-        html         
+        html
       }
     }
 }
 ```
 
 ### Query for assets
+
 ```
 {
     allTildaAsset {
@@ -75,3 +79,5 @@ module.exports = {
     }
 }
 ```
+
+`localFile` will be empty if `downloadAssets = false`

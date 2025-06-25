@@ -7,6 +7,7 @@ export interface PluginSettings {
   projectId: string;
   exclude: string[];
   skip?: boolean;
+  downloadAssets?: boolean;
   api: TildaApi;
 }
 
