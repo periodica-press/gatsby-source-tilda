@@ -67,6 +67,9 @@ class TildaApi {
 
   instance: AxiosInstance;
 
+  // every request counts towards the hourly limit of Tilda API (150 per hour)
+  requestCount = 0;
+
   constructor(publicKey: string, secret: string) {
     this.publicKey = publicKey;
     this.secret = secret;
@@ -77,6 +80,10 @@ class TildaApi {
         publickey: this.publicKey,
         secretkey: this.secret,
       },
+    });
+    this.instance.interceptors.request.use((config) => {
+      this.requestCount += 1;
+      return config;
     });
   }
 

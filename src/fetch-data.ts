@@ -1,7 +1,7 @@
 import type { Reporter } from 'gatsby';
 import { isAxiosError } from 'axios';
 import type { PluginSettings } from './plugin-options';
-import { describeError } from './utils';
+import { describeError, isTildaLimitError } from './utils';
 
 export interface FetchPagesProps {
   pluginConfig: PluginSettings;
@@ -22,8 +22,9 @@ const sleep = (ms: number) =>
   });
 
 // retry only transient failures: network errors, 429 and 5xx
+// (not the hourly limit: it is not going to pass in a few seconds)
 const isRetryable = (e: unknown) => {
-  if (!isAxiosError(e)) {
+  if (!isAxiosError(e) || isTildaLimitError(e)) {
     return false;
   }
   const status = e.response?.status;
@@ -55,7 +56,13 @@ const withRetries = async <T>(
       } failed after ${elapsed}ms`;
 
       if (attempt >= fetchRetries || !isRetryable(e)) {
-        reporter.error(`${prefix}\n  ${describeError(e)}`);
+        reporter.error(
+          `${prefix}${
+            isTildaLimitError(e)
+              ? ', Tilda API limit (150 requests per hour) is exceeded, try again in about an hour'
+              : ''
+          }\n  ${describeError(e)}`
+        );
         throw e;
       }
 
@@ -66,40 +73,30 @@ const withRetries = async <T>(
   }
 };
 
+// errors are thrown to the caller, which decides to fail the build or use cached data
 export const fetchPages = async ({
   pluginConfig,
   reporter,
 }: FetchPagesProps) => {
   const { projectId } = pluginConfig;
 
-  try {
-    return await withRetries(
-      `Tilda Pages list (projectId: ${projectId})`,
-      () => pluginConfig.api.fetchProjectPages(projectId),
-      { pluginConfig, reporter }
-    );
-  } catch (e) {
-    reporter.panicOnBuild(`Fetch Tilda Pages failed`, e as Error);
-    return [];
-  }
+  return withRetries(
+    `Tilda Pages list (projectId: ${projectId})`,
+    () => pluginConfig.api.fetchProjectPages(projectId),
+    { pluginConfig, reporter }
+  );
 };
 
 export const fetchPageInfo = async ({
   pageId,
   pluginConfig,
   reporter,
-}: FetchPageInfoProps) => {
-  try {
-    return await withRetries(
-      `Tilda Page (id: ${pageId})`,
-      () => pluginConfig.api.fetchPage(pageId),
-      { pluginConfig, reporter }
-    );
-  } catch (e) {
-    reporter.panicOnBuild(
-      `Couldn't get Tilda Page (id: ${pageId}) Info`,
-      e as Error
-    );
-    throw e;
-  }
-};
+}: FetchPageInfoProps) =>
+  withRetries(
+    `Tilda Page (id: ${pageId})`,
+    () => pluginConfig.api.fetchPage(pageId),
+    {
+      pluginConfig,
+      reporter,
+    }
+  );
