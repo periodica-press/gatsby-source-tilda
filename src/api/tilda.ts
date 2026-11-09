@@ -2,6 +2,7 @@ import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 
 const API = 'http://api.tildacdn.info/v1/';
+const REQUEST_TIMEOUT_MS = 30000;
 
 export interface TildaProjectInfo {
   id: string;
@@ -71,6 +72,7 @@ class TildaApi {
     this.secret = secret;
     this.instance = axios.create({
       baseURL: API,
+      timeout: REQUEST_TIMEOUT_MS,
       params: {
         publickey: this.publicKey,
         secretkey: this.secret,
