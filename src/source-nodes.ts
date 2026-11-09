@@ -52,15 +52,22 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   );
 
   reporter.info(`Fetch Tilda Pages info...`);
+  const { default: PQueue } = await import('p-queue');
+  const pagesQueue = new PQueue({ concurrency: config.fetchConcurrency });
   const pagesInfo = await Promise.all(
-    pages.map((p) => {
-      reporter.info(`Fetching '${p.alias}' – '${p.title}' info...`);
-      return fetchPageInfo({
-        pageId: p.id,
-        pluginConfig: config,
-        reporter,
-      });
-    })
+    pages.map((p) =>
+      pagesQueue.add(
+        () => {
+          reporter.info(`Fetching '${p.alias}' – '${p.title}' info...`);
+          return fetchPageInfo({
+            pageId: p.id,
+            pluginConfig: config,
+            reporter,
+          });
+        },
+        { throwOnTimeout: true }
+      )
+    )
   );
 
   // get new, updated and deleted pages

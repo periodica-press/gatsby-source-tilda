@@ -8,6 +8,8 @@ export interface PluginSettings {
   exclude: string[];
   skip?: boolean;
   downloadAssets?: boolean;
+  fetchConcurrency: number;
+  fetchRetries: number;
   api: TildaApi;
 }
 
@@ -16,6 +18,8 @@ const defaultOptions: Omit<PluginSettings, 'api'> = {
   projectId: '',
   publicKey: '',
   exclude: [],
+  fetchConcurrency: 5,
+  fetchRetries: 3,
 };
 
 export const createPluginConfig = (pluginOptions: PluginOptions) => {

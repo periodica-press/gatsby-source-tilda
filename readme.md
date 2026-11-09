@@ -20,6 +20,8 @@ module.exports = {
          projectId: process.env.TILDA_PROJECT_ID,       # tilda project Id to sync
          skip: true / false,                            # skip tilda sync
          downloadAssets: true / false,                  # download all tilda assets (css/js/img) locally
+         fetchConcurrency: 5,                           # max parallel requests when fetching pages (default 5)
+         fetchRetries: 3,                               # retries of a failed page request: network errors, 429, 5xx (default 3)
          exclude: [],                                   # pages to exclude e.g. ['faq', 'folder/subfolder/blog-post-url']
        },
     },
