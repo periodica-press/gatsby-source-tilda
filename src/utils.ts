@@ -5,6 +5,17 @@ export const createPageNodeId = (
   pageId: string
 ) => createNodeId(`tilda-page-${pageId}`);
 
+// Tilda answers 409 `Too much requests per hour. Limit: 150 requests per 1 hour`
+export const isTildaLimitError = (e: unknown) => {
+  if (!isAxiosError(e) || e.response?.status !== 409) {
+    return false;
+  }
+  const { data } = e.response;
+  return /too much requests/i.test(
+    typeof data === 'string' ? data : JSON.stringify(data ?? '')
+  );
+};
+
 const SENSITIVE_PARAMS = ['publickey', 'secretkey'];
 const BODY_LIMIT = 500;
 const LOGGED_HEADERS = new RegExp(

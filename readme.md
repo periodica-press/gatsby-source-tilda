@@ -23,6 +23,8 @@ module.exports = {
          fetchConcurrency: 5,                           # max parallel requests when fetching pages (default 5)
          fetchRetries: 3,                               # retries of a failed page request: network errors, 429, 5xx (default 3)
          refetchAll: true / false,                      # fetch export of every page, not only new/republished ones (default false)
+         onFetchError: 'fail' / 'use-cache',            # what to do when Tilda API fails: fail the build (default) or use cached pages
+                                                        # (only where a cached version exists, content may be outdated)
          exclude: [],                                   # pages to exclude e.g. ['faq', 'folder/subfolder/blog-post-url']
        },
     },

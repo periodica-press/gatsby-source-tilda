@@ -9,6 +9,7 @@ export interface PluginSettings {
   skip?: boolean;
   downloadAssets?: boolean;
   refetchAll?: boolean;
+  onFetchError: 'fail' | 'use-cache';
   fetchConcurrency: number;
   fetchRetries: number;
   api: TildaApi;
@@ -21,6 +22,7 @@ const defaultOptions: Omit<PluginSettings, 'api'> = {
   exclude: [],
   fetchConcurrency: 5,
   fetchRetries: 3,
+  onFetchError: 'fail',
 };
 
 export const createPluginConfig = (pluginOptions: PluginOptions) => {

@@ -5,6 +5,8 @@ import { downloadTildaAssets } from './download-assets';
 import { createTildaPageAssets, createTildaPages } from './create-tilda-pages';
 import { fetchPages, fetchPageInfo } from './fetch-data';
 import { OWNER, PAGE_ASSET_TYPE, PAGE_TYPE } from './consts';
+import { isTildaLimitError } from './utils';
+import type { TildaPageInfo, TildaPageExportInfo } from './api/tilda';
 import type { TildaAsset } from './types';
 
 export const sourceNodes: GatsbyNode['sourceNodes'] = async (
@@ -46,7 +48,25 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
 
   // fetch tilda pages list
   reporter.info(`Fetch Tilda Pages for projectId: ${config.projectId}...`);
-  let pages = await fetchPages({ pluginConfig: config, reporter });
+  let pages: TildaPageInfo[];
+  try {
+    pages = await fetchPages({ pluginConfig: config, reporter });
+  } catch (e) {
+    // keep cached nodes from garbage collection (the build may go on, e.g. in develop)
+    const cachedNodes = getNodes().filter((n) => n.internal.owner === OWNER);
+    cachedNodes.forEach((n) => touchNode(n));
+    reporter.info(`Tilda API requests this build: ${config.api.requestCount}`);
+
+    if (config.onFetchError === 'use-cache' && cachedNodes.length) {
+      reporter.warn(
+        `Tilda pages list is unavailable, using ${cachedNodes.length} cached Tilda nodes. Content may be outdated!`
+      );
+      return;
+    }
+
+    reporter.panicOnBuild(`Fetch Tilda Pages failed`, e as Error);
+    return;
+  }
   pages = pages.filter(
     (p) => !config.exclude.find((item: any) => item === p.alias)
   );
@@ -91,24 +111,70 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   const { default: PQueue } = await import('p-queue');
   const pagesQueue = new PQueue({ concurrency: config.fetchConcurrency });
   let started = 0;
-  const pagesInfo = await Promise.all(
+  let limitError: unknown;
+  const failures = new Map<string, { page: TildaPageInfo; error: unknown }>();
+  const fetched = await Promise.all(
     pagesToFetch.map((p) =>
       pagesQueue.add(
-        () => {
+        async () => {
+          // the hourly limit is exceeded, other requests are going to fail too
+          if (limitError) {
+            failures.set(p.id, { page: p, error: limitError });
+            return null;
+          }
           started += 1;
           reporter.info(
             `Fetching '${p.alias}' – '${p.title}' info (${started}/${pagesToFetch.length}, in flight: ${pagesQueue.pending})...`
           );
-          return fetchPageInfo({
-            pageId: p.id,
-            pluginConfig: config,
-            reporter,
-          });
+          try {
+            return await fetchPageInfo({
+              pageId: p.id,
+              pluginConfig: config,
+              reporter,
+            });
+          } catch (error) {
+            if (isTildaLimitError(error)) {
+              limitError = error;
+            }
+            failures.set(p.id, { page: p, error });
+            return null;
+          }
         },
         { throwOnTimeout: true }
       )
     )
   );
+  const pagesInfo = fetched.filter((info): info is TildaPageExportInfo =>
+    Boolean(info)
+  );
+  reporter.info(`Tilda API requests this build: ${config.api.requestCount}`);
+
+  // pages that can't be fetched, but have a cached version, stay as they were
+  const outdatedPageIds = new Set<string>();
+  const failedWithoutCache = [...failures.values()].filter(
+    ({ page }) =>
+      config.onFetchError !== 'use-cache' ||
+      !tildaPageNodes.some((n) => n.pageId === page.id)
+  );
+  if (failedWithoutCache.length) {
+    // keep cached nodes from garbage collection (the build may go on, e.g. in develop)
+    [...tildaPageNodes, ...tildaAssetsNodes].forEach((n) => touchNode(n));
+    reporter.panicOnBuild(
+      `Couldn't get ${
+        failedWithoutCache.length
+      } Tilda page(s) info: ${failedWithoutCache
+        .map(({ page }) => `'${page.alias}' (id: ${page.id})`)
+        .join(', ')}`,
+      failedWithoutCache[0].error as Error
+    );
+    return;
+  }
+  failures.forEach(({ page }) => {
+    outdatedPageIds.add(page.id);
+    reporter.warn(
+      `Tilda page '${page.alias}' (id: ${page.id}) is unavailable, using cached version. Content may be outdated!`
+    );
+  });
 
   // process deleted tilda pages and assets
   const deleteTildaNode = (node: NodeInput) => deleteNode(node);
@@ -141,21 +207,27 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
     `Created/Updated pages: ${[...newPages, ...updatedPages].length}`
   );
   reporter.info(`Unmodified pages: ${notModifiedPgs.length}`);
+  reporter.info(`Outdated pages (cached fallback): ${outdatedPageIds.size}`);
   reporter.info(`Deleted pages: ${deletedPageNodes.length}`);
   reporter.info('');
-  reporter.info(`Total TildaAssets: ${tildaAssets.length}`);
+  reporter.info(`Fetched TildaAssets: ${tildaAssets.length}`);
   reporter.info(`Cached TildaAssets: ${tildaAssetsNodes.length}`);
   reporter.info(`Deleted assets: ${deletedAssets.length}`);
   reporter.info('');
 
   // touch unmodified pages and their assets to keep from garbage collection
   // (their exports were not fetched, so nodes are not recreated)
-  const notModifiedPageIds = new Set(notModifiedPgs.map((n) => n.pageId));
-  notModifiedPgs.forEach((pageNode: any) => {
-    touchNode(pageNode);
-  });
+  const keptPageIds = new Set([
+    ...notModifiedPgs.map((n) => n.pageId),
+    ...outdatedPageIds,
+  ]);
+  tildaPageNodes
+    .filter((n) => keptPageIds.has(n.pageId))
+    .forEach((pageNode: any) => {
+      touchNode(pageNode);
+    });
   tildaAssetsNodes
-    .filter((n) => notModifiedPageIds.has(n.pageId))
+    .filter((n) => keptPageIds.has(n.pageId))
     .forEach((assetNode: any) => {
       touchNode(assetNode);
     });
