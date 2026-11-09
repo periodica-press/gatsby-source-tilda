@@ -54,11 +54,15 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   reporter.info(`Fetch Tilda Pages info...`);
   const { default: PQueue } = await import('p-queue');
   const pagesQueue = new PQueue({ concurrency: config.fetchConcurrency });
+  let started = 0;
   const pagesInfo = await Promise.all(
     pages.map((p) =>
       pagesQueue.add(
         () => {
-          reporter.info(`Fetching '${p.alias}' – '${p.title}' info...`);
+          started += 1;
+          reporter.info(
+            `Fetching '${p.alias}' – '${p.title}' info (${started}/${pages.length}, in flight: ${pagesQueue.pending})...`
+          );
           return fetchPageInfo({
             pageId: p.id,
             pluginConfig: config,

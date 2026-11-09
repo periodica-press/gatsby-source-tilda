@@ -7,7 +7,9 @@ export const createPageNodeId = (
 
 const SENSITIVE_PARAMS = ['publickey', 'secretkey'];
 const BODY_LIMIT = 500;
-const LOGGED_HEADERS = ['retry-after', 'content-type', 'server', 'date', 'via'];
+const LOGGED_HEADERS = new RegExp(
+  '^(retry-after|content-type|content-length|server|date|via|cf-ray|x-request-id|x-ratelimit-.*)$'
+);
 
 const truncate = (text: string) =>
   text.length > BODY_LIMIT ? `${text.slice(0, BODY_LIMIT)}…` : text;
@@ -36,9 +38,9 @@ export const describeError = (e: unknown): string => {
 
   if (response) {
     lines.push(`status: ${response.status} ${response.statusText}`);
-    const headers = LOGGED_HEADERS.filter((h) => response.headers?.[h]).map(
-      (h) => `${h}=${response.headers[h]}`
-    );
+    const headers = Object.entries(response.headers ?? {})
+      .filter(([name]) => LOGGED_HEADERS.test(name))
+      .map(([name, value]) => `${name}=${value}`);
     if (headers.length) {
       lines.push(`headers: ${headers.join(', ')}`);
     }

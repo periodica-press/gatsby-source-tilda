@@ -14,20 +14,6 @@ export interface FetchPageInfoProps {
   reporter: Reporter;
 }
 
-export const fetchPages = async ({
-  pluginConfig,
-  reporter,
-}: FetchPagesProps) => {
-  try {
-    const { projectId } = pluginConfig;
-    const pages = await pluginConfig.api.fetchProjectPages(projectId);
-    return pages;
-  } catch (e) {
-    reporter.panicOnBuild(`Fetch Tilda Pages failed`, e as Error);
-    return [];
-  }
-};
-
 const RETRY_BASE_DELAY_MS = 1000;
 
 const sleep = (ms: number) =>
@@ -44,39 +30,67 @@ const isRetryable = (e: unknown) => {
   return status === undefined || status === 429 || status >= 500;
 };
 
+const withRetries = async <T>(
+  label: string,
+  request: () => Promise<T>,
+  {
+    pluginConfig,
+    reporter,
+  }: { pluginConfig: PluginSettings; reporter: Reporter }
+): Promise<T> => {
+  const { fetchRetries } = pluginConfig;
+
+  for (let attempt = 0; ; attempt += 1) {
+    const startedAt = Date.now();
+    try {
+      return await request();
+    } catch (e) {
+      const elapsed = Date.now() - startedAt;
+      const prefix = `${label} attempt ${attempt + 1}/${
+        fetchRetries + 1
+      } failed after ${elapsed}ms`;
+
+      if (attempt >= fetchRetries || !isRetryable(e)) {
+        reporter.error(`${prefix}\n  ${describeError(e)}`);
+        throw e;
+      }
+
+      const delay = RETRY_BASE_DELAY_MS * 2 ** attempt;
+      reporter.warn(`${prefix}, retry in ${delay}ms\n  ${describeError(e)}`);
+      await sleep(delay);
+    }
+  }
+};
+
+export const fetchPages = async ({
+  pluginConfig,
+  reporter,
+}: FetchPagesProps) => {
+  const { projectId } = pluginConfig;
+
+  try {
+    return await withRetries(
+      `Tilda Pages list (projectId: ${projectId})`,
+      () => pluginConfig.api.fetchProjectPages(projectId),
+      { pluginConfig, reporter }
+    );
+  } catch (e) {
+    reporter.panicOnBuild(`Fetch Tilda Pages failed`, e as Error);
+    return [];
+  }
+};
+
 export const fetchPageInfo = async ({
   pageId,
   pluginConfig,
   reporter,
 }: FetchPageInfoProps) => {
-  const { fetchRetries } = pluginConfig;
-
   try {
-    for (let attempt = 0; ; attempt += 1) {
-      const startedAt = Date.now();
-      try {
-        return await pluginConfig.api.fetchPage(pageId);
-      } catch (e) {
-        const elapsed = Date.now() - startedAt;
-        if (attempt >= fetchRetries || !isRetryable(e)) {
-          reporter.error(
-            `Tilda Page (id: ${pageId}) attempt ${attempt + 1}/${
-              fetchRetries + 1
-            } failed after ${elapsed}ms\n  ${describeError(e)}`
-          );
-          throw e;
-        }
-        const delay = RETRY_BASE_DELAY_MS * 2 ** attempt;
-        reporter.warn(
-          `Tilda Page (id: ${pageId}) attempt ${attempt + 1}/${
-            fetchRetries + 1
-          } failed after ${elapsed}ms, retry in ${delay}ms\n  ${describeError(
-            e
-          )}`
-        );
-        await sleep(delay);
-      }
-    }
+    return await withRetries(
+      `Tilda Page (id: ${pageId})`,
+      () => pluginConfig.api.fetchPage(pageId),
+      { pluginConfig, reporter }
+    );
   } catch (e) {
     reporter.panicOnBuild(
       `Couldn't get Tilda Page (id: ${pageId}) Info`,
