@@ -44,37 +44,14 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
     return;
   }
 
-  // fetch tilda data
+  // fetch tilda pages list
   reporter.info(`Fetch Tilda Pages for projectId: ${config.projectId}...`);
   let pages = await fetchPages({ pluginConfig: config, reporter });
   pages = pages.filter(
     (p) => !config.exclude.find((item: any) => item === p.alias)
   );
 
-  reporter.info(`Fetch Tilda Pages info...`);
-  const { default: PQueue } = await import('p-queue');
-  const pagesQueue = new PQueue({ concurrency: config.fetchConcurrency });
-  let started = 0;
-  const pagesInfo = await Promise.all(
-    pages.map((p) =>
-      pagesQueue.add(
-        () => {
-          started += 1;
-          reporter.info(
-            `Fetching '${p.alias}' – '${p.title}' info (${started}/${pages.length}, in flight: ${pagesQueue.pending})...`
-          );
-          return fetchPageInfo({
-            pageId: p.id,
-            pluginConfig: config,
-            reporter,
-          });
-        },
-        { throwOnTimeout: true }
-      )
-    )
-  );
-
-  // get new, updated and deleted pages
+  // get new, updated, unmodified and deleted pages comparing with cached nodes
   const tildaPageNodes = getNodes().filter(
     (n: { internal: { owner: string; type: string } }) =>
       n.internal.owner === OWNER && n.internal.type === PAGE_TYPE
@@ -97,13 +74,40 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   const updatedPages = pages.filter((p) =>
     tildaPageNodes.find((n) => p.id === n.pageId && n.published !== p.published)
   );
-
-  // const notModifiedPages = pages.filter((p) =>
-  //   tildaPageNodes.find((n) => p.id === n.pageId && n.published === p.published)
-  // );
-
   const notModifiedPgs = tildaPageNodes.filter((n) =>
     pages.find((p) => p.id === n.pageId && n.published === p.published)
+  );
+
+  // Tilda API is limited (150 requests per hour), so request the page export
+  // only for pages that are not in the cache or were republished since then
+  const pagesToFetch = config.refetchAll
+    ? pages
+    : [...newPages, ...updatedPages];
+
+  reporter.info(
+    `Fetch Tilda Pages info: ${pagesToFetch.length} of ${pages.length} pages` +
+      ` (new: ${newPages.length}, updated: ${updatedPages.length}, cached: ${notModifiedPgs.length})...`
+  );
+  const { default: PQueue } = await import('p-queue');
+  const pagesQueue = new PQueue({ concurrency: config.fetchConcurrency });
+  let started = 0;
+  const pagesInfo = await Promise.all(
+    pagesToFetch.map((p) =>
+      pagesQueue.add(
+        () => {
+          started += 1;
+          reporter.info(
+            `Fetching '${p.alias}' – '${p.title}' info (${started}/${pagesToFetch.length}, in flight: ${pagesQueue.pending})...`
+          );
+          return fetchPageInfo({
+            pageId: p.id,
+            pluginConfig: config,
+            reporter,
+          });
+        },
+        { throwOnTimeout: true }
+      )
+    )
   );
 
   // process deleted tilda pages and assets
@@ -144,10 +148,17 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
   reporter.info(`Deleted assets: ${deletedAssets.length}`);
   reporter.info('');
 
-  // touch unmodified pages to keep from garbage collection
+  // touch unmodified pages and their assets to keep from garbage collection
+  // (their exports were not fetched, so nodes are not recreated)
+  const notModifiedPageIds = new Set(notModifiedPgs.map((n) => n.pageId));
   notModifiedPgs.forEach((pageNode: any) => {
     touchNode(pageNode);
   });
+  tildaAssetsNodes
+    .filter((n) => notModifiedPageIds.has(n.pageId))
+    .forEach((assetNode: any) => {
+      touchNode(assetNode);
+    });
 
   // create nodes for all tilda pages
   await Promise.all(

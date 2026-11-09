@@ -8,6 +8,7 @@ export interface PluginSettings {
   exclude: string[];
   skip?: boolean;
   downloadAssets?: boolean;
+  refetchAll?: boolean;
   fetchConcurrency: number;
   fetchRetries: number;
   api: TildaApi;
