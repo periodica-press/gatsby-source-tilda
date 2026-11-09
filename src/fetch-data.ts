@@ -1,6 +1,7 @@
 import type { Reporter } from 'gatsby';
 import { isAxiosError } from 'axios';
 import type { PluginSettings } from './plugin-options';
+import { describeError } from './utils';
 
 export interface FetchPagesProps {
   pluginConfig: PluginSettings;
@@ -52,17 +53,26 @@ export const fetchPageInfo = async ({
 
   try {
     for (let attempt = 0; ; attempt += 1) {
+      const startedAt = Date.now();
       try {
         return await pluginConfig.api.fetchPage(pageId);
       } catch (e) {
+        const elapsed = Date.now() - startedAt;
         if (attempt >= fetchRetries || !isRetryable(e)) {
+          reporter.error(
+            `Tilda Page (id: ${pageId}) attempt ${attempt + 1}/${
+              fetchRetries + 1
+            } failed after ${elapsed}ms\n  ${describeError(e)}`
+          );
           throw e;
         }
         const delay = RETRY_BASE_DELAY_MS * 2 ** attempt;
         reporter.warn(
-          `Tilda Page (id: ${pageId}) request failed (${
-            (e as Error).message
-          }), retry ${attempt + 1}/${fetchRetries} in ${delay}ms...`
+          `Tilda Page (id: ${pageId}) attempt ${attempt + 1}/${
+            fetchRetries + 1
+          } failed after ${elapsed}ms, retry in ${delay}ms\n  ${describeError(
+            e
+          )}`
         );
         await sleep(delay);
       }
