@@ -4,12 +4,20 @@ on:
   push:
     branches: [master, next, alpha, beta]
 
+permissions:
+  contents: write # tags and GitHub releases
+  issues: write
+  pull-requests: write
+  packages: read # install @periodica-press/* from GitHub Packages
+  id-token: write # npm trusted publishing (OIDC)
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [20.x]
+        # trusted publishing requires npm >= 11.5.1 (bundled with Node 24)
+        node-version: [24.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +34,5 @@ jobs:
       - name: Publish package
         if: always()
         env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
