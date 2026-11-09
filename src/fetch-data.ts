@@ -43,7 +43,11 @@ const withRetries = async <T>(
   for (let attempt = 0; ; attempt += 1) {
     const startedAt = Date.now();
     try {
-      return await request();
+      const result = await request();
+      reporter.info(
+        `${label} ok in ${Date.now() - startedAt}ms (attempt ${attempt + 1})`
+      );
+      return result;
     } catch (e) {
       const elapsed = Date.now() - startedAt;
       const prefix = `${label} attempt ${attempt + 1}/${

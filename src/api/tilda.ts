@@ -1,7 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import axios from 'axios';
 
-const API = 'http://api.tildacdn.info/v1/';
+const API = 'https://api.tildacdn.info/v1/';
 const REQUEST_TIMEOUT_MS = 30000;
 
 export interface TildaProjectInfo {
