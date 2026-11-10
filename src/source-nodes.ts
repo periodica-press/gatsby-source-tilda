@@ -67,6 +67,9 @@ export const sourceNodes: GatsbyNode['sourceNodes'] = async (
     reporter.panicOnBuild(`Fetch Tilda Pages failed`, e as Error);
     return;
   }
+  if (config.api.snapshotSyncedAt) {
+    reporter.info(`Tilda snapshot synced at ${config.api.snapshotSyncedAt}`);
+  }
   pages = pages.filter(
     (p) => !config.exclude.find((item: any) => item === p.alias)
   );
