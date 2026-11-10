@@ -60,7 +60,17 @@ export interface PagesListResponse {
   result: TildaPageInfo[];
 }
 
-class TildaApi {
+// source of pages for the plugin: Tilda API itself or a snapshot of it in a storage (see SnapshotApi)
+export interface TildaDataSource {
+  // number of requests made to Tilda API (a snapshot makes none)
+  requestCount: number;
+  // when the snapshot was synced from Tilda, only for a snapshot
+  snapshotSyncedAt?: string;
+  fetchProjectPages(projectId: string): Promise<TildaPageInfo[]>;
+  fetchPage(pageId: string): Promise<TildaPageExportInfo>;
+}
+
+class TildaApi implements TildaDataSource {
   publicKey: string;
 
   secret: string;
@@ -120,7 +130,7 @@ class TildaApi {
     return response.data.result.filter((page) => page.published !== '') || [];
   }
 
-  async fetchPage(pageId: string) {
+  async fetchPage(pageId: string): Promise<TildaPageExportInfo> {
     const response = await this.instance.get<PagesExportsResponse>(
       '/getpageexport',
       {
@@ -134,7 +144,7 @@ class TildaApi {
       );
     }
 
-    return response.data.result || [];
+    return response.data.result;
   }
 }
 
